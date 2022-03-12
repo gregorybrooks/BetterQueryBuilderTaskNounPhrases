@@ -1,0 +1,126 @@
+import unicodedata as ud
+import io
+import spacy
+import string
+
+
+"""
+This class loads an arabic Translation Table (similar to ISI provided) 
+"""
+class GalagoQT:
+    def __init__(self, tt_dir, emb_src_path=None, emb_tgt_path=None):
+        self.eng_nlp = spacy.load("en_core_web_sm")
+        # loading the translation table 
+        self.tt_dict = self._load_translation_dict(tt_dir)
+        
+    
+    def trace(self, text):
+        f = open("GalagoQTdebug.txt", "a")
+        f.write(text)
+        f.write("\n")
+        f.close()
+
+    
+    """
+    Returns a translation of a phrase as a galago query,
+    for example for english query "North Korea"
+    returns '#combine(شمال الشمال) #combine(كوريا الشمالية)'
+    
+    1. (default) trans_type='tt_syn_op' get tran_top_k of translations from tt
+    
+    if top_trans=1 -> uses the translation itself without #combine operator
+    """
+    def tranlate_phrase_sdm_syn(self, ph_txt, tran_top_k, trans_type='tt_syn_op'):
+        self.trace("GalagoQT: tranlate_phrase_sdm_syn")
+        self.trace(ph_txt)
+        kw_tokens = self.spacy_english_tokenizer_and_cleaner(ph_txt)
+        self.trace('back from self.spacy_english_tokenizer_and_cleaner')
+        wrapped_kw = ''
+        self.trace('Length of phrase: ' + str(len(kw_tokens)))
+        if len(kw_tokens)>=1:
+            kw_tokens_translations = []
+            for kw_token in kw_tokens:
+                self.trace('token: ' + kw_token)
+                if trans_type=='tt_syn_op':
+                    self.trace('Calling get_tt_topk')
+                    q_trans_tokens = self.get_tt_topk(kw_token, topk=tran_top_k)
+                    self.trace('back from get_tt_topk')
+                q_trans_tokens = [token for score, token in q_trans_tokens]
+                if len(q_trans_tokens)>1:
+                    self.trace('wrapping it with combine')
+                    wrapped_trans = f"#combine({' '.join(q_trans_tokens)})"
+                    self.trace('finished wrapping it with synonym')
+                else:
+                    self.trace('joining it')
+                    wrapped_trans = ' '.join(q_trans_tokens)
+                    self.trace('finished joining it')
+                kw_tokens_translations.append(wrapped_trans)
+
+            if len(kw_tokens_translations)>1:
+                self.trace('wrapping it with combine')
+                wrapped_kw = f"#combine({' '.join(kw_tokens_translations)})"
+                self.trace('finished wrapping it with combine')
+            else:
+                self.trace('final joining')
+                wrapped_kw = f"{' '.join(kw_tokens_translations)}"
+                self.trace('finished with final joining')
+        self.trace(wrapped_kw)
+        return wrapped_kw
+    
+    
+    
+    """
+    How to use: 
+    mytrains = get_tt_topk("world", topk=2)
+
+    [(0.619245, 'العالم'),
+     (0.0974328, 'العالمية')
+     ]
+    """
+    def get_tt_topk(self, src_token, topk=5):
+        tgt_tokens = self.tt_dict.get(src_token, None)
+        if tgt_tokens is not None:
+            tgt_tokens = sorted(tgt_tokens, key = lambda x: x[0], reverse=True)
+        else:
+            tgt_tokens = [(1.0, src_token)]
+        return tgt_tokens[:topk]
+    
+    
+    def _load_translation_dict(self, tt_file):
+        lines = open(tt_file, 'r', encoding='utf-8').readlines()
+        tt_dict = {}
+        for line in lines:
+            # '"\tإليه\t4.47296e-05\n' -> ['en_term', 'ar_term', '0.458949']
+            #line = remove_puncuations(line)
+            line_splitted = line.strip().split('\t')
+            if len(line_splitted)==3:
+                src_token = self.remove_puncuations(line_splitted[0])
+                tgt_token = self.remove_puncuations(line_splitted[1].replace('\t', ''))
+                if len(src_token)==0 or len(tgt_token)==0:
+                    continue
+                score = float(line_splitted[2])
+                trans_terms = tt_dict.get(src_token, [])
+                trans_terms.append((score, tgt_token))
+                tt_dict[src_token] = trans_terms
+        return tt_dict
+    
+    def remove_puncuations(self, text):
+        #s = "أهلاً بالعالم في هذه التجربة ! علامات ،الترقيم ؟ ,? لا .اتذكرها"
+        # sout = 'أهلاً بالعالم في هذه التجربة  علامات الترقيم   لا اتذكرها'
+        return ''.join(c for c in text if not ud.category(c).startswith('P'))
+
+
+    """
+    1. Remove puncutations
+    Use spaCy for:
+    1. Tokenize into words
+    2. remove stopwords 
+    """
+    def spacy_english_tokenizer_and_cleaner(self, text):
+        doc = self.eng_nlp(text.replace('#', ' '))  # phrase to tokenize
+        eng_stopwords = self.eng_nlp.Defaults.stop_words
+        text_tokens_clean = ' '.join([w.text.lower() for w in doc if not w.text.lower() in eng_stopwords])
+        final_tokens = text_tokens_clean.translate(str.maketrans('', '', string.punctuation))
+        return final_tokens.split()
+    
+    
