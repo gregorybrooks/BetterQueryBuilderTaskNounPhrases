@@ -1,8 +1,6 @@
 package edu.umass.ciir;
 
 import com.cedarsoftware.util.io.JsonWriter;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -12,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.*;
 
-public class BetterQueryBuilderNGram {
+public class BetterQueryBuilderTaskNounPhrases {
     private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
     private Map<String, String> queries = new ConcurrentHashMap<>();
     private Map<String, String> nonTranslatedQueries = new ConcurrentHashMap<>();
@@ -624,7 +622,7 @@ public class BetterQueryBuilderNGram {
         String qrelFile = args[9];
         String targetIndexLocation = args[10];
 
-        BetterQueryBuilderNGram betterIR = new BetterQueryBuilderNGram();
+        BetterQueryBuilderTaskNounPhrases betterIR = new BetterQueryBuilderTaskNounPhrases();
         betterIR.setupLogging(logFileLocation);
 
         if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI")) {
