@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  * to extract noun phrases, verbs and named entities from text.
  */
 public class Spacy {
-    private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
+    private static final Logger logger = Logger.getLogger("BetterQueryBuilderTaskNounPhrases");
 
     private String programDirectory = "./";
     private LineOrientedPythonDaemon sentenceDaemon = null;

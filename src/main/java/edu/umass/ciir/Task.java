@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class Task {
-    private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
+    private static final Logger logger = Logger.getLogger("BetterQueryBuilderTaskNounPhrases");
     String taskNum;
     String taskTitle;
     String taskStmt;

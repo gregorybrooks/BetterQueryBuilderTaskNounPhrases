@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.*;
 
 public class BetterQueryBuilderTaskNounPhrases {
-    private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
+    private static final Logger logger = Logger.getLogger("BetterQueryBuilderTaskNounPhrases");
     private Map<String, String> queries = new ConcurrentHashMap<>();
     private Map<String, String> nonTranslatedQueries = new ConcurrentHashMap<>();
     private String analyticTasksFile;

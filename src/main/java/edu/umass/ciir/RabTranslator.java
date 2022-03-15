@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  * A translator that uses Rab's translator.
  */
 public class RabTranslator implements TranslatorInterface {
-    private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
+    private static final Logger logger = Logger.getLogger("BetterQueryBuilderTaskNounPhrases");
 
     private String programDirectory = "./";
     private String logFileDirectory = "./";

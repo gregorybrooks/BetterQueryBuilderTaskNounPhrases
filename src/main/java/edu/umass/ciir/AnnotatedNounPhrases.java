@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class AnnotatedNounPhrases {
-    private static final Logger logger = Logger.getLogger("BetterQueryBuilderNGram");
+    private static final Logger logger = Logger.getLogger("BetterQueryBuilderTaskNounPhrases");
 
     private Map<String, String> annotatedNounPhrases = null;
     private String annotatedNounPhasesFilePath;
