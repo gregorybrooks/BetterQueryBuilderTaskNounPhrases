@@ -12,7 +12,7 @@ public class LineOrientedPythonDaemon {
 
     LineOrientedPythonDaemon(String programDirectory, String programName) {
         try {
-            System.out.println("Starting " + programDirectory + programName);
+            //System.out.println("Starting " + programDirectory + programName);
             sentenceProcessBuilder = new ProcessBuilder("python3",
                     programDirectory + programName);
             sentenceProcessBuilder.directory(new File(programDirectory));
@@ -29,7 +29,7 @@ public class LineOrientedPythonDaemon {
 
     LineOrientedPythonDaemon(String programDirectory, String programName, String parameter) {
         try {
-            System.out.println("Starting " + programDirectory + programName + " " + parameter);
+            //System.out.println("Starting " + programDirectory + programName + " " + parameter);
             sentenceProcessBuilder = new ProcessBuilder("python3",
                     programDirectory + programName, parameter);
             sentenceProcessBuilder.directory(new File(programDirectory));

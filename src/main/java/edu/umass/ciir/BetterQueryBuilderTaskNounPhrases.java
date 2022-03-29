@@ -25,6 +25,7 @@ public class BetterQueryBuilderTaskNounPhrases {
     private TranslatorInterface translator;
     private AnnotatedNounPhrases np;
     private boolean includeAllPhrases = false;
+    private String queryFileDirectory;
 
     /* Set the following to true if you want to create the to-be-annotated noun phrases spreadsheet,
         for the HITL to fill in.
@@ -257,14 +258,23 @@ public class BetterQueryBuilderTaskNounPhrases {
     protected void buildDocsString(Task t) {
         logger.info("Building query for task " + t.taskNum);
 
-        if (createToBeAnnotatedNounPhrasesFile) {
-            np.createToBeAnnotatedNounPhrasesFile(logFileLocation + t.taskNum + ".task_level_noun_phrases.xlsx", t);
-        } else {
-            // Open the phrase annotation file if there is one for this task
-            if (mode.equals("HITL")) {
-                np.openNounPhrasesFile(t.taskNum + ".annotated_task_level_noun_phrases.xlsx", t);
+        if (mode.equals("HITL")) {
+            String toBeAnnotatedNounPhrasesFileName = queryFileDirectory
+                    + t.taskNum + ".to_be_annotated_task_level_noun_phrases.json";
+            if (!fileExists(toBeAnnotatedNounPhrasesFileName)) {
+                logger.info("Building the to_be_annotated_task_level_noun_phrases.json file for this task");
+                np.createToBeAnnotatedNounPhrasesFile(toBeAnnotatedNounPhrasesFileName, t);
+                createToBeAnnotatedNounPhrasesFile = true;
             } else {
-                logger.info("Not using an annotations file");
+                createToBeAnnotatedNounPhrasesFile = false;
+                // Open the phrase annotation file if there is one for this task
+                try {
+                    logger.info("Opening the annotated_task_level_noun_phrases file for this task");
+                    np.openNounPhrasesJSONFile(queryFileDirectory
+                            + t.taskNum + ".annotated_task_level_noun_phrases.json", t);
+                } catch (Exception e) {
+                    throw new BetterQueryBuilderException(e);
+                }
             }
         }
 
@@ -323,23 +333,23 @@ public class BetterQueryBuilderTaskNounPhrases {
             } else {
                 if (mode.equals("HITL")) {
                     if (np.hasAnnotations()) {   // if there is an annotated noun phrases file
-                        logger.info("Looking for phrase in annotations: " + entry.getKey());
+                        //logger.info("Looking for phrase in annotations: " + entry.getKey());
                         if (np.containsPhrase(entry.getKey())) {
-                            logger.info("Phrase found in annotations");
+                            //logger.info("Phrase found in annotations");
                             if (isRelevant(np.getPhraseAnnotation(entry.getKey()))) {
-                                logger.info("Phrase is relevant, using it");
+                                //logger.info("Phrase is relevant, using it");
                                 finalList.add(filterCertainCharacters(entry.getKey()));
                             } else {
-                                logger.info("Phrase is not relevant, skipping it");
+                                //logger.info("Phrase is not relevant, skipping it");
                                 ;  // annotator said it was not relevant, don't add it to finalList
                             }
                         } else { // annotation file has nothing to say about this phrase, so use normal selection criteria
-                            logger.info("Phrase not found in annotations, using normal selection criteria for it");
+                            //logger.info("Phrase not found in annotations, using normal selection criteria for it");
                             if (includeAllPhrases || (uniqueDocIds.size() == 1) || (entry.getValue() > 1)) {
-                                logger.info("Using the phrase");
+                                //logger.info("Using the phrase");
                                 finalList.add(filterCertainCharacters(entry.getKey()));
                             } else {
-                                logger.info("Not using the phrase");
+                                //logger.info("Not using the phrase");
                             }
                         }
                     }
@@ -359,11 +369,13 @@ public class BetterQueryBuilderTaskNounPhrases {
             np.closeToBeAnnotatedNounPhrasesFile();
         }
 
+/*
         System.out.println("****************************** " + t.taskNum + ": BEGIN SELECTED NOUN PHRASES:");
         for (String phrase : finalList) {
             System.out.println(phrase);
         }
         System.out.println("****************************** " + t.taskNum + ": END SELECTED NOUN PHRASES");
+*/
 
         boolean useTaskParts = (mode.equals("AUTO-HITL") || mode.equals("HITL"));
 
@@ -388,15 +400,19 @@ public class BetterQueryBuilderTaskNounPhrases {
          */
         List<String> translatedFinalList;
         if (!targetLanguageIsEnglish) {
-//            System.out.println("ENGLISH PHRASES:");
-//            for (String s : finalList) {
-//                System.out.println(s);
-//            }
+/*
+            System.out.println("ENGLISH PHRASES:");
+            for (String s : finalList) {
+                System.out.println(s);
+            }
+*/
             translatedFinalList = translator.getTranslations(finalList);
-//            System.out.println("BECOMES:");
-//            for (String s : translatedFinalList) {
-//                System.out.println(s);
-//            }
+/*
+            System.out.println("BECOMES:");
+            for (String s : translatedFinalList) {
+                System.out.println(s);
+            }
+*/
         } else {
             translatedFinalList = nonTranslatedFinalList;
         }
@@ -438,23 +454,29 @@ public class BetterQueryBuilderTaskNounPhrases {
                 if (t.taskTitle != null) {
                     String part = filterCertainCharacters(t.taskTitle);
                     taskParts.add(part);
+/*
                     System.out.println("****************************** " + t.taskNum + ": BEGIN TASK TITLE:");
                     System.out.println(part);
                     System.out.println("****************************** " + t.taskNum + ": END TASK TITLE");
+*/
                 }
                 if (t.taskStmt != null) {
                     String part = filterCertainCharacters(t.taskStmt);
                     taskParts.add(part);
+/*
                     System.out.println("****************************** " + t.taskNum + ": BEGIN TASK STATEMENT:");
                     System.out.println(part);
                     System.out.println("****************************** " + t.taskNum + ": END TASK STATEMENT");
+*/
                 }
                 if (t.taskNarr != null) {
                     String part = filterCertainCharacters(t.taskNarr);
                     taskParts.add(part);
+/*
                     System.out.println("****************************** " + t.taskNum + ": BEGIN TASK NARRATIVE:");
                     System.out.println(part);
                     System.out.println("****************************** " + t.taskNum + ": END TASK NARRATIVE");
+*/
                 }
             }
         }
@@ -507,28 +529,36 @@ public class BetterQueryBuilderTaskNounPhrases {
             nonTranslatedFinalString = "#combine (" + nonTranslatedNounPhrasesString + ")";
         }
 
+/*
         System.out.println("****************************** " + t.taskNum + ": BEGIN QUERY:");
         System.out.println(nonTranslatedFinalString);
         System.out.println("****************************** " + t.taskNum + ": END QUERY");
+*/
 
         setQuery(t.taskNum, finalString);
         setNonTranslatedQuery(t.taskNum, nonTranslatedFinalString);
     }
 
     private void addNounPhrases(Map<String, Integer> soFar, String extr, String header, String taskNum) {
+/*
         System.out.println("****************************** " + taskNum + ": BEGIN GET NOUN PHRASES for " + header);
         System.out.println("****************************** " + taskNum + ": BEGIN TEXT:");
         System.out.println(extr);
         System.out.println("****************************** " + taskNum + ": END TEXT:");
+*/
 
         extr = filterCertainCharacters(extr);
 
         List<String> nouns = spacy.getNounPhrases(extr);
 
+/*
         System.out.println("****************************** " + taskNum + ": BEGIN EXTRACTED NOUN PHRASES:");
+*/
 
         for (String noun_phrase : nouns) {
+/*
             System.out.println(noun_phrase);
+*/
             if (mode.equals("HITL")) {
                 if (stopPhrases.contains(noun_phrase)) {
                     logger.info("Phrase in the stop list--skipping it");
@@ -544,8 +574,14 @@ public class BetterQueryBuilderTaskNounPhrases {
                 }
             }
         }
+/*
         System.out.println("****************************** " + taskNum + ": END EXTRACTED NOUN PHRASES:");
         System.out.println("****************************** " + taskNum + ": END GET NOUN PHRASES for " + header);
+*/
+    }
+
+    private boolean fileExists(String fileName) {
+        return new File(fileName).exists();
     }
 
     /**
@@ -554,7 +590,7 @@ public class BetterQueryBuilderTaskNounPhrases {
      */
     private void processTaskQueries(String analyticTasksFile, String mode, String outputQueryFileName,
                          boolean targetLanguageIsEnglish, String programDirectory, String phase, String targetLanguage,
-                                    String logFileLocation) {
+                                    String logFileLocation, String queryFileDirectory) {
         logger.info("Starting task-level query construction");
         this.programDirectory = programDirectory;
         this.spacy = new Spacy(programDirectory);
@@ -563,6 +599,7 @@ public class BetterQueryBuilderTaskNounPhrases {
         this.targetLanguageIsEnglish = targetLanguageIsEnglish;
         this.outputQueryFileName = outputQueryFileName;
         this.logFileLocation = logFileLocation;
+        this.queryFileDirectory = queryFileDirectory;
 
         readTaskFile();
 
@@ -572,7 +609,14 @@ public class BetterQueryBuilderTaskNounPhrases {
         if (mode.equals("HITL")) {
             logger.info("Building stop phrase list");
             for (Task t : tasks) {
-                stopPhrases.addAll(np.getStopPhrases(t));
+                // use the annotated noun phrase file that is in the Docker's home directory
+                // unless there exists a file with the same name in the queryFiles directory (override file)
+                String annotatedNounPhraseFileName = queryFileDirectory + t.taskNum + ".annotated_task_level_noun_phrases.json";
+                try {
+                    stopPhrases.addAll(np.getStopPhrases(annotatedNounPhraseFileName, t));
+                } catch (Exception e) {
+                    throw new BetterQueryBuilderException(e);
+                }
             }
             logger.info("STOP PHRASES LIST:");
             for (String phrase : stopPhrases) {
@@ -590,6 +634,10 @@ public class BetterQueryBuilderTaskNounPhrases {
         } else {
             return s;
         }
+    }
+
+    private static String getDirectoryFromFileName(String fileName) {
+        return new File(fileName).getParent();
     }
 
     /**
@@ -635,9 +683,12 @@ public class BetterQueryBuilderTaskNounPhrases {
             System.exit(-1);
         }
 
+        String queryFileDirectory = getDirectoryFromFileName(outputQueryFileName);
+        queryFileDirectory = ensureTrailingSlash(queryFileDirectory);
+
         if (phase.equals("Task")) {
             betterIR.processTaskQueries(analyticTasksFile, mode, outputQueryFileName, targetLanguageIsEnglish,
-                    programDirectory, phase, targetLanguage, logFileLocation);
+                    programDirectory, phase, targetLanguage, logFileLocation, queryFileDirectory);
         } else {
             System.out.println("Bad phase: " + phase);
             System.exit(-1);
