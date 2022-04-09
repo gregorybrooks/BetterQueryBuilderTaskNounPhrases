@@ -24,8 +24,11 @@ public class BetterQueryBuilderTaskNounPhrases {
     private String phase;
     private TranslatorInterface translator;
     private AnnotatedNounPhrases np;
+    private AnnotatedSentences annotatedSentences;
     private boolean includeAllPhrases = false;
     private String queryFileDirectory;
+    private List<Task> tasks = new ArrayList<>();
+
 
     /* Set the following to true if you want to create the to-be-annotated noun phrases spreadsheet,
         for the HITL to fill in.
@@ -77,7 +80,7 @@ public class BetterQueryBuilderTaskNounPhrases {
      * Sets up logging for this program.
      */
     public void setupLogging(String logFileLocation) {
-        String logFileName = logFileLocation + "/better-query-builder-ngram.log";
+        String logFileName = logFileLocation + "/better-query-builder-task-noun-phrases.log";
         configureLogger(logFileName);
     }
 
@@ -185,8 +188,6 @@ public class BetterQueryBuilderTaskNounPhrases {
         }
     }
 
-    List<Task> tasks = new ArrayList<>();
-
     private String getOptionalValue(JSONObject t, String field) {
         if (t.containsKey(field)) {
             return (String) t.get(field);
@@ -217,7 +218,17 @@ public class BetterQueryBuilderTaskNounPhrases {
                     String highlight = getOptionalValue(taskDoc, "highlight");
                     String docText = (String) taskDoc.get("doc-text");
                     String docID = (String) taskDoc.get("doc-id");
-                    taskExampleDocuments.add(new ExampleDocument(docID, docText, highlight));
+                    List<SentenceRange> sentences = new ArrayList<>();
+                    JSONArray jsonSentences = (JSONArray) taskDoc.get("sentences");
+                    for (Object jsonObjectSentenceDescriptor : jsonSentences) {
+                        JSONObject jsonSentenceDescriptor = (JSONObject) jsonObjectSentenceDescriptor;
+                        long start = (long) jsonSentenceDescriptor.get("start");
+                        long end = (long) jsonSentenceDescriptor.get("end");
+                        long id = (long) jsonSentenceDescriptor.get("id");
+                        String sentence = docText.substring((int) start, (int) end);
+                        sentences.add(new SentenceRange((int) id, (int) start, (int) end, sentence));
+                    }
+                    taskExampleDocuments.add(new ExampleDocument(docID, docText, highlight, sentences));
                 }
                 JSONArray taskRequests = (JSONArray) t.get("requests");
                 List<Request> requests = new ArrayList<>();
@@ -233,7 +244,17 @@ public class BetterQueryBuilderTaskNounPhrases {
                         String highlight = getOptionalValue(reqDoc, "highlight");
                         String docText = (String) reqDoc.get("doc-text");
                         String docID = (String) reqDoc.get("doc-id");
-                        requestExampleDocuments.add(new ExampleDocument(docID, docText, highlight));
+                        List<SentenceRange> sentences = new ArrayList<>();
+                        JSONArray jsonSentences = (JSONArray) reqDoc.get("sentences");
+                        for (Object jsonObjectSentenceDescriptor : jsonSentences) {
+                            JSONObject jsonSentenceDescriptor = (JSONObject) jsonObjectSentenceDescriptor;
+                            long start = (long) jsonSentenceDescriptor.get("start");
+                            long end = (long) jsonSentenceDescriptor.get("end");
+                            long id = (long) jsonSentenceDescriptor.get("id");
+                            String sentence = docText.substring((int) start, (int) end);
+                            sentences.add(new SentenceRange((int) id, (int) start, (int) end, sentence));
+                        }
+                        requestExampleDocuments.add(new ExampleDocument(docID, docText, highlight, sentences));
                     }
                     requests.add(new Request(reqNum, reqText, requestExampleDocuments));
                 }
@@ -275,6 +296,14 @@ public class BetterQueryBuilderTaskNounPhrases {
                 } catch (Exception e) {
                     throw new BetterQueryBuilderException(e);
                 }
+            }
+
+            /* As a side-effect of this function, we create the to_be_annotated_sentences file if is not there */
+            String toBeAnnotatedSentencesFileName = queryFileDirectory
+                    + t.taskNum + ".to_be_annotated_sentences.json";
+            if (!fileExists(toBeAnnotatedSentencesFileName)) {
+                logger.info("Building the to_be_annotated_sentences.json file for this task");
+                annotatedSentences.createToBeAnnotatedSentencesFile(toBeAnnotatedSentencesFileName, t);
             }
         }
 
@@ -584,6 +613,14 @@ public class BetterQueryBuilderTaskNounPhrases {
         return new File(fileName).exists();
     }
 
+    private Task findTask(String taskNum) {
+        for (Task t : tasks) {
+            if (taskNum.equals(t.taskNum))
+                return t;
+        }
+        return null;
+    }
+
     /**
      * Processes the analytic tasks file: generates queries for the Tasks and Requests,
      * executes the queries, annotates hits with events.
@@ -604,6 +641,7 @@ public class BetterQueryBuilderTaskNounPhrases {
         readTaskFile();
 
         np = new AnnotatedNounPhrases(spacy);
+        annotatedSentences = new AnnotatedSentences();
 
         stopPhrases = new HashSet<>();
         if (mode.equals("HITL")) {

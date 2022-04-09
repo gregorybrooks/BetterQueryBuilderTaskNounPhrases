@@ -20,8 +20,8 @@ public class Task {
         this.taskTitle = taskTitle;
         this.taskStmt = taskStmt;
         this.taskNarr = taskNarr;
-        this.taskExampleDocs = exampleDocuments;
-        this.requests = requests;
+        this.taskExampleDocs = new ArrayList<>(exampleDocuments);
+        this.requests = new ArrayList<>(requests);
     }
 
     public List<String> getExampleDocids() {
@@ -41,13 +41,9 @@ public class Task {
         this.taskTitle = (otherTask.taskTitle == null ? null : new String(otherTask.taskTitle));
         this.taskStmt = (otherTask.taskStmt == null ? null : new String(otherTask.taskStmt));;
         this.taskNarr = (otherTask.taskNarr == null ? null : new String(otherTask.taskNarr));
-        this.requests = new ArrayList<>();
-        for(Request r : otherTask.requests) {
-            this.requests.add(r);
-        }
+        this.requests = new ArrayList<>(otherTask.requests);
         this.taskExampleDocs = new ArrayList<>(otherTask.taskExampleDocs);
     }
-
 
     public List<Request> getRequests() { return requests; }
 

@@ -69,12 +69,9 @@ public class AnnotatedNounPhrases {
                 String phrase = (String) iterator.next();
                 JSONObject phraseEntry = (JSONObject) phrasesMap.get(phrase);
                 String sentences = (String) phraseEntry.get("sentences");
-                String judgment = (String) phraseEntry.get("judgment");
-                if (!validJudgments.stream().anyMatch(judgment::equals)) {
-                    judgment = null;
-                }
+                String judgment = ((String) Objects.requireNonNullElse(phraseEntry.get("judgment"), "")).toUpperCase();
                 AnnotatedNounPhraseDetail detail = new AnnotatedNounPhraseDetail(judgment, sentences);
-                if (phrase != null && judgment != null) {
+                if (phrase != null && validJudgments.stream().anyMatch(judgment::equals)) {
                     if (!annotatedNounPhrases.containsKey(phrase)) {
                         logger.info(detail.getJudgment() + ": " + phrase);
                         annotatedNounPhrases.put(phrase, detail);
@@ -95,7 +92,7 @@ public class AnnotatedNounPhrases {
 
     public void closeToBeAnnotatedNounPhrasesFile() {
         try {
-            logger.info("Writing to be annotated noun phrases file to " + toBeAnnotatedFilePath);
+            logger.info("Writing to-be-annotated-noun-phrases file to " + toBeAnnotatedFilePath);
             JSONObject targetTopMap = new JSONObject();
             for (Map.Entry<String,AnnotatedNounPhraseDetail> entry : annotatedNounPhrases.entrySet()) {
                 String phrase = entry.getKey();
