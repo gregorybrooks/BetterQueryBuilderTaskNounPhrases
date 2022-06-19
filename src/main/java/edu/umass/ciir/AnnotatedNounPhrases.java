@@ -41,6 +41,43 @@ public class AnnotatedNounPhrases {
         return annotatedNounPhrases.get(phrase).getJudgment();
     }
 
+
+    public List<String> getAllRelevantPhrases() {
+        List<String> relevantPrases = new ArrayList<>();
+        for (Map.Entry<String,AnnotatedNounPhraseDetail> e : annotatedNounPhrases.entrySet()) {
+            String phrase = e.getKey();
+            AnnotatedNounPhraseDetail judgment = e.getValue();
+            if (!judgment.getJudgment().equals("B")) {
+                relevantPrases.add(phrase);
+            }
+        }
+        return relevantPrases;
+    }
+
+    private Set<String> getBuiltInStopPhrases() {
+        Set<String> stopPhrases = new HashSet<>();
+        String stopPhasesFileName = "/home/taskquerybuilder/stop_phrases.txt";
+        try {
+            if (fileExists(stopPhasesFileName)) {
+                logger.info("Opening stop phrases file " + stopPhasesFileName);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        new FileInputStream(stopPhasesFileName)));
+                String line = reader.readLine();
+                while (line != null) {
+                    stopPhrases.add(line.toLowerCase());
+                    line = reader.readLine();
+                }
+                reader.close();
+            } else {
+                logger.info("No built-in stop phrases file");
+            }
+        } catch (Exception e) {
+            throw new BetterQueryBuilderException(e);
+        }
+        return stopPhrases;
+    }
+
+
     public List<String> getStopPhrases(String fileName, Task t) throws IOException, ParseException {
         openNounPhrasesJSONFile(fileName, t);
         List<String> stopWordsList = new ArrayList<>();
@@ -48,7 +85,7 @@ public class AnnotatedNounPhrases {
             String phrase = e.getKey();
             AnnotatedNounPhraseDetail judgment = e.getValue();
             if ((judgment.getJudgment().equals("B") || judgment.getJudgment().equals("F"))) {  //TBD
-                stopWordsList.add(phrase);
+                stopWordsList.add(phrase.toLowerCase());
             }
         }
         return stopWordsList;
@@ -185,7 +222,7 @@ public class AnnotatedNounPhrases {
                 hits.add(sentence);
             }
         }
-        String context = String. join("\n", hits);
+        String context = String. join("\n...", hits);
         AnnotatedNounPhraseDetail detail = new AnnotatedNounPhraseDetail("", context);
         annotatedNounPhrases.put(nounPhrase, detail);
     }

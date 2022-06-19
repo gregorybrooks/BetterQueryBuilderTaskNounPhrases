@@ -24,6 +24,15 @@ public class Task {
         this.requests = new ArrayList<>(requests);
     }
 
+    public List<String> getHighlights() {
+        List<String> extractions = new ArrayList<>();
+        for (ExampleDocument d : taskExampleDocs) {
+            extractions.add(d.getHighlight());
+        }
+        return extractions;
+    }
+
+
     public List<String> getExampleDocids() {
         List<String> docids = new ArrayList<>();
         for (ExampleDocument d : taskExampleDocs) {

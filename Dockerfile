@@ -76,6 +76,7 @@ COPY --chown=taskquerybuilder programfiles/translation_tables/unidirectional-wit
 COPY --chown=taskquerybuilder programfiles/get_noun_phrases_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder programfiles/get_sentences_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder runit.sh /home/taskquerybuilder
+COPY --chown=taskquerybuilder stop_phrases.txt /home/taskquerybuilder
 COPY --chown=taskquerybuilder target /home/taskquerybuilder/target
 COPY --chown=taskquerybuilder *annotated_task_level_noun_phrases.xlsx /home/taskquerybuilder/
 

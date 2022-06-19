@@ -1,12 +1,13 @@
 package edu.umass.ciir;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.xmlbeans.impl.xb.xsdschema.Annotated;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class AnnotatedSentences {
@@ -14,73 +15,42 @@ public class AnnotatedSentences {
 
     AnnotatedSentences() { }
 
-    public void createToBeAnnotatedSentencesFile(String toBeAnnotatedFilePath, Task t) {
-        try {
-            logger.info("Writing to-be-annotated-sentences file to " + toBeAnnotatedFilePath);
-            JSONObject targetTopMap = new JSONObject();
-            targetTopMap.put("taskId", t.taskNum);
-            targetTopMap.put("taskTitle", t.taskTitle);
-            targetTopMap.put("taskNarrative", t.taskNarr);
-            targetTopMap.put("taskStatement", t.taskStmt);
-            JSONArray taskExampleDocs = new JSONArray();
-            int taskExampleDocIndex = 0;
-            for (ExampleDocument e : t.taskExampleDocs) {
-                JSONObject exampleDocJSON = new JSONObject();
-                exampleDocJSON.put("docId", e.getDocid());
-                exampleDocJSON.put("docNumber", ++taskExampleDocIndex);
-                JSONArray sentencesJSON = new JSONArray();
-                int sentenceIndex = 0;
-                for (SentenceRange sentenceRange : e.getSentences()) {
-                    JSONObject detail = new JSONObject();
-                    detail.put("judgment", "");
-                    detail.put("sentence", sentenceRange.text);
-                    String sentenceId = t.taskNum + "-td" + taskExampleDocIndex + "-s" + ++sentenceIndex;
-                    detail.put("sentenceId", sentenceId);
-                    sentencesJSON.add(detail);
-                }
-                exampleDocJSON.put("sentences", sentencesJSON);
-                taskExampleDocs.add(exampleDocJSON);
-            }
-            targetTopMap.put("exampleDocs", taskExampleDocs);
-            JSONArray requestsJSON = new JSONArray();
-            int requestIndex = 0;
-            for (Request r : t.getRequests()) {
-                requestIndex += 1;
-                JSONObject requestJSON = new JSONObject();
-                requestJSON.put("requestId", r.reqNum);
+    public List<AnnotatedSentence> fetchSentences(String annotatedSentencesFile) {
+        List<AnnotatedSentence> sentences = new ArrayList<>();
+        String fileName = annotatedSentencesFile;
+        File myObj = new File(fileName);
+        if (myObj.exists()) {
+            try {
+                File f = new File(fileName);
+                logger.info("Opening " + fileName);
+                Reader reader = new BufferedReader(new InputStreamReader(
+                        new FileInputStream(fileName)));
+                JSONParser parser = new JSONParser();
+                JSONObject topLevelJSON = (JSONObject) parser.parse(reader);
+                JSONObject requestJSON = (JSONObject) topLevelJSON.get("request");
 
-                requestJSON.put("requestText", r.reqText == null ? "" : r.reqText);
-                JSONArray requestExampleDocs = new JSONArray();
-                int requestExampleDocIndex = 0;
-                for (ExampleDocument e : r.reqExampleDocs) {
-                    requestExampleDocIndex += 1;
-                    JSONObject exampleDocJSON = new JSONObject();
-                    exampleDocJSON.put("docId", e.getDocid());
-                    exampleDocJSON.put("docNumber", ++requestExampleDocIndex);
-                    JSONArray sentencesJSON = new JSONArray();
-                    int sentenceIndex = 0;
-                    for (SentenceRange sentenceRange : e.getSentences()) {
-                        JSONObject detail = new JSONObject();
-                        detail.put("judgment", "");
-                        detail.put("sentence", sentenceRange.text);
-                        String sentenceId = t.taskNum + "-r" + requestIndex + "-rd" + requestExampleDocIndex + "-s" + ++sentenceIndex;
-                        detail.put("sentenceId", sentenceId);
-                        sentencesJSON.add(detail);
+                JSONArray exampleDocsJSON = (JSONArray) requestJSON.get("exampleDocs");
+                for (Object exampleDocObject : exampleDocsJSON) {
+                    JSONObject exampleDocJSON = (JSONObject) exampleDocObject;
+                    int docNumber = Math.toIntExact((long) exampleDocJSON.get("docNumber"));
+                    String docId = (String) exampleDocJSON.get("docId");
+
+                    JSONArray sentencesJSON = (JSONArray) exampleDocJSON.get("sentences");
+                    for (Object sentenceObject : sentencesJSON) {
+                        JSONObject sentenceJSON = (JSONObject) sentenceObject;
+                        String sentence = (String) sentenceJSON.get("sentence");
+                        String sentenceId = (String) sentenceJSON.get("sentenceId");
+                        String judgment = (String) sentenceJSON.get("judgment");
+                        AnnotatedSentence annotatedSentence = new AnnotatedSentence(sentenceId, sentence, judgment);
+                        if (sentence != null) {
+                            sentences.add(annotatedSentence);
+                        }
                     }
-                    exampleDocJSON.put("sentences", sentencesJSON);
-                    requestExampleDocs.add(exampleDocJSON);
                 }
-                requestJSON.put("exampleDocs",requestExampleDocs);
-                requestsJSON.add(requestJSON);
+            } catch (Exception e) {
+                throw new BetterQueryBuilderException(e);
             }
-            targetTopMap.put("requests", requestsJSON);
-
-            PrintWriter writer = new PrintWriter(new OutputStreamWriter(
-                    new FileOutputStream(toBeAnnotatedFilePath)));
-            writer.write(targetTopMap.toJSONString());
-            writer.close();
-        } catch (Exception e) {
-            throw new BetterQueryBuilderException(e);
         }
+        return sentences;
     }
 }
