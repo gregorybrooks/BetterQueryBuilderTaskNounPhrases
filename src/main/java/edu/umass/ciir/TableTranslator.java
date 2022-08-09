@@ -26,23 +26,30 @@ public class TableTranslator implements TranslatorInterface {
      */
     public TableTranslator(String programDirectory, String targetLanguage) {
         String ttable;
-        if (targetLanguage.equals("FARSI")) {
+        switch (targetLanguage) {
+            case "FARSI":
 //            ttable = "translation_tables/en-fa-3-col-ttable-no-normal.txt"; // FARSI
 //            this.lowercaseNeeded = true;
-            ttable = "translation_tables/CCAligned.en-fa.fw.actual.ti.final"; // FARSI
-            this.lowercaseNeeded = false;
-        } else if (targetLanguage.equals("ARABIC")) {
-            this.lowercaseNeeded = true;
-            ttable = "translation_tables/unidirectional-with-null-en-ar.simple-tok.txt";  // ARABIC
-        } else {
-            throw new BetterQueryBuilderException("Unsupported language: " + targetLanguage);
+                ttable = "translation_tables/CCAligned.en-fa.fw.actual.ti.final"; // FARSI
+                this.lowercaseNeeded = false;
+                break;
+            case "ARABIC":
+                this.lowercaseNeeded = true;
+                ttable = "translation_tables/unidirectional-with-null-en-ar.simple-tok.txt";  // ARABIC
+                break;
+            case "RUSSIAN":
+                this.lowercaseNeeded = true;
+                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt"; // RUSSIAN
+                break;
+            default:
+                throw new BetterQueryBuilderException("Unsupported language: " + targetLanguage);
         }
         String translationTableFileName = programDirectory + ttable;
 
         File f = new File(translationTableFileName);
         if (f.exists()) {
 
-            BufferedReader br = null;
+            BufferedReader br;
 
             try {
                 br = new BufferedReader(new FileReader(translationTableFileName));
@@ -54,7 +61,7 @@ public class TableTranslator implements TranslatorInterface {
             String line;
             while(true) {
                 try {
-                    if (!((line =br.readLine())!=null))
+                    if ((line = br.readLine()) == null)
                         break;
                 } catch (IOException e) {
                     throw new BetterQueryBuilderException("IO error while reading translation table file "
@@ -65,7 +72,7 @@ public class TableTranslator implements TranslatorInterface {
                 String target = tokens[1];
                 Double prob = Double.valueOf(tokens[2]);
                 if (!translationTable.containsKey(source)) {
-                    List<TranslatedTerm> lst = new ArrayList<TranslatedTerm>();
+                    List<TranslatedTerm> lst = new ArrayList<>();
                     lst.add(new TranslatedTerm(target,prob));
                     translationTable.put(source, lst);
                 } else {
@@ -166,13 +173,12 @@ public class TableTranslator implements TranslatorInterface {
     public String getTranslation(String text) {
         String newText = "";
         for (String originalTerm : text.split("[‘'’´!”“\"\\[\\]@ — .();?{}:,/\n\t-]")) {
-            String term = originalTerm;
-            if (term.length() > 2 && !stopWords.contains(term) && !isAllNumeric(term)) {
+            if (originalTerm.length() > 2 && !stopWords.contains(originalTerm) && !isAllNumeric(originalTerm)) {
                 String decodedTerm;
                 if (lowercaseNeeded) {
-                    decodedTerm = unidecode.decode(term).toLowerCase();
+                    decodedTerm = unidecode.decode(originalTerm).toLowerCase();
                 } else {
-                    decodedTerm = unidecode.decode(term);
+                    decodedTerm = unidecode.decode(originalTerm);
                 }
 //                System.out.println("English term: " + decodedTerm);
                 if (translationTable.containsKey(decodedTerm)) {

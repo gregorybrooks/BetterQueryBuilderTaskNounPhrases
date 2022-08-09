@@ -28,6 +28,7 @@ public class BetterQueryBuilderTaskNounPhrases {
     private boolean includeAllPhrases = false;
     private String queryFileDirectory;
     private List<Task> tasks = new ArrayList<>();
+    private String searchEngine;
 
 
     /* Set the following to true if you want to create the to-be-annotated noun phrases spreadsheet,
@@ -140,6 +141,23 @@ public class BetterQueryBuilderTaskNounPhrases {
         }
     }
 
+    protected void writeAnseriniQueryFile() {
+        // Output the query list as a JSON file,
+        // in the format Anserini's TsvString topicreader expects as input
+        logger.info("Writing query file " + outputQueryFileName);
+
+        try {
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                    new FileOutputStream(outputQueryFileName)));
+            for (Map.Entry<String, String> entry : queries.entrySet()) {
+                writer.println(entry.getKey() + "\t" + entry.getValue());
+            }
+            writer.close();
+        } catch (Exception e) {
+            throw new BetterQueryBuilderException(e);
+        }
+    }
+
     public static String filterCertainCharactersPostTranslation(String q) {
         if (q == null || q.length() == 0) {
             return q;
@@ -212,8 +230,8 @@ public class BetterQueryBuilderTaskNounPhrases {
                 String taskNarr = getOptionalValue(t, "task-narr");
                 JSONObject taskDocMap = (JSONObject) t.get("task-docs");
                 List<ExampleDocument> taskExampleDocuments = new ArrayList<>();
-                for (Iterator iterator = taskDocMap.keySet().iterator(); iterator.hasNext(); ) {
-                    String entryKey = (String) iterator.next();
+                for (Object item : taskDocMap.keySet()) {
+                    String entryKey = (String) item;
                     JSONObject taskDoc = (JSONObject) taskDocMap.get(entryKey);
                     String highlight = getOptionalValue(taskDoc, "highlight");
                     String docText = (String) taskDoc.get("doc-text");
@@ -238,8 +256,8 @@ public class BetterQueryBuilderTaskNounPhrases {
                     String reqNum = (String) request.get("req-num");
                     JSONObject requestDocMap = (JSONObject) request.get("req-docs");
                     List<ExampleDocument> requestExampleDocuments = new ArrayList<>();
-                    for (Iterator iterator = requestDocMap.keySet().iterator(); iterator.hasNext(); ) {
-                        String entryKey = (String) iterator.next();
+                    for (Object value : requestDocMap.keySet()) {
+                        String entryKey = (String) value;
                         JSONObject reqDoc = (JSONObject) requestDocMap.get(entryKey);
                         String highlight = getOptionalValue(reqDoc, "highlight");
                         String docText = (String) reqDoc.get("doc-text");
@@ -270,12 +288,12 @@ public class BetterQueryBuilderTaskNounPhrases {
         if (phase.equals("Request")) {
             for (Task task : tasks) {
                 for (Request request : task.getRequests()) {
-                    buildDocsStringDemoDay(task, request);
+                    buildDocsString(task, request);
                 }
             }
         } else {
             for (Task t : tasks) {
-                buildDocsStringDemoDay(t, null);
+                buildDocsString(t, null);
             }
         }
     }
@@ -330,13 +348,15 @@ public class BetterQueryBuilderTaskNounPhrases {
             for (String extr : r.getReqExtrList()) {
                 addNounPhrases(soFar, extr, "HIGHLIGHT", t.taskNum);
             }
-            /* add noun phrases in sentences judged to be relevant to the query */
-            String annotatedSentencesFilePath = queryFileDirectory
-                    + t.taskNum + "." + r.reqNum + ".annotated_sentences.json";
-            for (AnnotatedSentence annotatedSentence : annotatedSentences.fetchSentences(annotatedSentencesFilePath)) {
-                if (isRelevant(annotatedSentence.getJudgment())) {
-                    logger.info("Getting phrases from a sentence judged to be relevant");
-                    addNounPhrases(soFar, annotatedSentence.getSentence(), "HIGHLIGHT", t.taskNum);
+            if (mode.equals("HITL")) {
+                /* add noun phrases in sentences judged to be relevant to the query */
+                String annotatedSentencesFilePath = queryFileDirectory
+                        + t.taskNum + "." + r.reqNum + ".annotated_sentences.json";
+                for (AnnotatedSentence annotatedSentence : annotatedSentences.fetchSentences(annotatedSentencesFilePath)) {
+                    if (isRelevant(annotatedSentence.getJudgment())) {
+                        logger.info("Getting phrases from a sentence judged to be relevant");
+                        addNounPhrases(soFar, annotatedSentence.getSentence(), "HIGHLIGHT", t.taskNum);
+                    }
                 }
             }
         }
@@ -412,12 +432,17 @@ public class BetterQueryBuilderTaskNounPhrases {
          */
         List<String> nonTranslatedFinalList = new ArrayList<>();
         /* First the non-translated version: */
+        
         for (String phrase : finalList) {
-            if (!phrase.contains(" ")) {
+            if (searchEngine.equals("anserini")) {
                 nonTranslatedFinalList.add(phrase);
-            } else {
-                /* For multi-word phrases, we wrap the phrase in a sequential dependence operator */
-                nonTranslatedFinalList.add("#sdm(" + phrase + ") ");
+            } else if (searchEngine.equals("galago")) {
+                if (!phrase.contains(" ")) {
+                    nonTranslatedFinalList.add(phrase);
+                } else {
+                    /* For multi-word phrases, we wrap the phrase in a sequential dependence operator */
+                    nonTranslatedFinalList.add("#sdm(" + phrase + ") ");
+                }
             }
         }
         /*
@@ -451,8 +476,12 @@ public class BetterQueryBuilderTaskNounPhrases {
         for (String phrase : nonTranslatedFinalList) {
             nonTranslatedNounPhrasesStringBuilder.append(phrase).append(" ");
         }
-        String nonTranslatedNounPhrasesString = nonTranslatedNounPhrasesStringBuilder.toString();
-        nonTranslatedNounPhrasesString = "#combine(" + nonTranslatedNounPhrasesString + ") ";
+        String nonTranslatedNounPhrasesString = null;
+        if (searchEngine.equals("anserini")) {
+            nonTranslatedNounPhrasesString = nonTranslatedNounPhrasesStringBuilder.toString();
+        } else if (searchEngine.equals("galago")) {
+            nonTranslatedNounPhrasesString = "#combine(" + nonTranslatedNounPhrasesString + ") ";
+        }
 
         String nounPhrasesString;
         if (!targetLanguageIsEnglish) {
@@ -461,7 +490,9 @@ public class BetterQueryBuilderTaskNounPhrases {
                 nounPhrasesStringBuilder.append(filterCertainCharactersPostTranslation(phrase)).append(" ");
             }
             nounPhrasesString = nounPhrasesStringBuilder.toString();
-            nounPhrasesString = "#combine(" + nounPhrasesString + ") ";
+            if (searchEngine.equals("galago")) {
+                nounPhrasesString = "#combine(" + nounPhrasesString + ") ";
+            }
         } else {
             nounPhrasesString = nonTranslatedNounPhrasesString;
         }
@@ -527,7 +558,9 @@ public class BetterQueryBuilderTaskNounPhrases {
                 nonTranslatedTaskPartsStringBuilder.append(phrase).append(" ");
             }
             nonTranslatedTaskPartsString = nonTranslatedTaskPartsStringBuilder.toString();
-            nonTranslatedTaskPartsString = "#combine(" + nonTranslatedTaskPartsString + ") ";
+            if (searchEngine.equals("galago")) {
+                nonTranslatedTaskPartsString = "#combine(" + nonTranslatedTaskPartsString + ") ";
+            }
             List<String> translatedTaskParts;
             if (!targetLanguageIsEnglish) {
                 translatedTaskParts = translator.getTranslations(taskParts);
@@ -536,7 +569,9 @@ public class BetterQueryBuilderTaskNounPhrases {
                     taskPartsStringBuilder.append(filterCertainCharactersPostTranslation(phrase)).append(" ");
                 }
                 taskPartsString = taskPartsStringBuilder.toString();
-                taskPartsString = "#combine(" + taskPartsString + ") ";
+                if (searchEngine.equals("galago")) {
+                    taskPartsString = "#combine(" + taskPartsString + ") ";
+                }
             } else {
                 taskPartsString = nonTranslatedTaskPartsString;
             }
@@ -547,16 +582,23 @@ public class BetterQueryBuilderTaskNounPhrases {
          * from the noun phrases and task elements. Use the #combine's weights to heavily
          * emphasize the task elements (title, narrative and statement)
          */
-        String finalString;
-        String nonTranslatedFinalString;
+        String finalString = null;
+        String nonTranslatedFinalString = null;
 
         /* .8 vs .2 in the following was set based on benchmarks run on the ARABIC and FARSI eval data */
         if (useTaskParts && hasTaskParts) {
             if (translatedFinalList.size() > 0) {
-                finalString = "#combine:0=0.8:1=0.2 (" + nounPhrasesString + " "
-                        + taskPartsString + ")";
-                nonTranslatedFinalString = "#combine:0=0.8:1=0.2 (" + nonTranslatedNounPhrasesString + " "
-                        + nonTranslatedTaskPartsString + ")";
+                if (searchEngine.equals("galago")) {
+                    finalString = "#combine:0=0.8:1=0.2 (" + nounPhrasesString + " "
+                            + taskPartsString + ")";
+                    nonTranslatedFinalString = "#combine:0=0.8:1=0.2 (" + nonTranslatedNounPhrasesString + " "
+                            + nonTranslatedTaskPartsString + ")";
+                } else if (searchEngine.equals("anserini")) {
+                    finalString = nounPhrasesString + " "
+                        + taskPartsString;
+                    nonTranslatedFinalString = nonTranslatedNounPhrasesString + " "
+                        + nonTranslatedTaskPartsString;
+                }
             } else {
                 finalString = taskPartsString;
                 nonTranslatedFinalString = nonTranslatedTaskPartsString;
@@ -640,7 +682,7 @@ public class BetterQueryBuilderTaskNounPhrases {
      */
     private void processTaskQueries(String analyticTasksFile, String mode, String outputQueryFileName,
                          boolean targetLanguageIsEnglish, String programDirectory, String phase, String targetLanguage,
-                                    String logFileLocation, String queryFileDirectory) {
+                                    String logFileLocation, String queryFileDirectory, String searchEngine) {
         logger.info("Starting task-level query construction");
         this.programDirectory = programDirectory;
         this.spacy = new Spacy(programDirectory);
@@ -651,6 +693,7 @@ public class BetterQueryBuilderTaskNounPhrases {
         this.logFileLocation = logFileLocation;
         this.queryFileDirectory = queryFileDirectory;
         this.phase = phase;
+        this.searchEngine = searchEngine;
 
         readTaskFile();
 
@@ -677,7 +720,11 @@ public class BetterQueryBuilderTaskNounPhrases {
         }
 
         buildQueries();
-        writeQueryFile();
+        if (searchEngine.equals("anserini")) {
+            writeAnseriniQueryFile();
+        } else if (searchEngine.equals("galago")) {
+            writeQueryFile();
+        }
     }
 
     private Set<String> getStopPhrases() {
@@ -775,9 +822,7 @@ public class BetterQueryBuilderTaskNounPhrases {
             }
         }
         List<String> finalList = new ArrayList<>();
-        for (String phrase : soFar.keySet()) {
-            finalList.add(phrase);
-        }
+        finalList.addAll(soFar.keySet());
         boolean useTaskParts = false;  // Demo Day version does NOT use Task and Request meta-fields
         /*
          * Translate finalList, then put all those phrases into a string wrapped
@@ -938,31 +983,37 @@ public class BetterQueryBuilderTaskNounPhrases {
         String programDirectory = args[4];
         programDirectory = ensureTrailingSlash(programDirectory);
         String phase = args[5];
-        String targetLanguage = args[3];
+        String targetLanguage = args[3].toUpperCase(Locale.ROOT);
         String englishIndexLocation = args[6];
         String logFileLocation = args[7];
         logFileLocation = ensureTrailingSlash(logFileLocation);
         String galagoLocation = args[8];
         String qrelFile = args[9];
         String targetIndexLocation = args[10];
+        String searchEngine = args[11];
 
         BetterQueryBuilderTaskNounPhrases betterIR = new BetterQueryBuilderTaskNounPhrases();
         betterIR.setupLogging(logFileLocation);
 
-        if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI")) {
+        if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("RUSSIAN")) {
 //            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
             betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
-        } else if (targetLanguage.equals("ENGLISH")) {
+        } else if (targetLanguage.equals("ENGLISH") || targetLanguage.equals("EN")) {
             System.out.println("TARGET LANGUAGE IS ENGLISH");
         } else {
             System.out.println("Unsupported language: " + targetLanguage);
             System.exit(-1);
         }
 
+        if (!(searchEngine.equals("anserini") || searchEngine.equals("galago"))) {
+            System.out.println("Unsupported search engine: " + searchEngine);
+            System.exit(-1);
+        }
+        
         String queryFileDirectory = getDirectoryFromFileName(outputQueryFileName);
         queryFileDirectory = ensureTrailingSlash(queryFileDirectory);
 
         betterIR.processTaskQueries(analyticTasksFile, mode, outputQueryFileName, targetLanguageIsEnglish,
-                    programDirectory, phase, targetLanguage, logFileLocation, queryFileDirectory);
+                    programDirectory, phase, targetLanguage, logFileLocation, queryFileDirectory, searchEngine);
     }
 }
