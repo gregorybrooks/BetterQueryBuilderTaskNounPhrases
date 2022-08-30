@@ -995,8 +995,10 @@ public class BetterQueryBuilderTaskNounPhrases {
         BetterQueryBuilderTaskNounPhrases betterIR = new BetterQueryBuilderTaskNounPhrases();
         betterIR.setupLogging(logFileLocation);
 
-        if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("RUSSIAN")) {
-//            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+        if (targetLanguage.equals("RUSSIAN")) {
+            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+        }
+        else if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("CHINESE")) {
             betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
         } else if (targetLanguage.equals("ENGLISH") || targetLanguage.equals("EN")) {
             System.out.println("TARGET LANGUAGE IS ENGLISH");

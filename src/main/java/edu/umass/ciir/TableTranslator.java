@@ -16,8 +16,22 @@ public class TableTranslator implements TranslatorInterface {
     private Unidecode unidecode = Unidecode.toAscii();
     private List<String> stopWords = new ArrayList<>();
     private boolean lowercaseNeeded = true;
+    private boolean numberFilteringNeeded = false;
+    private String targetLanguage;
 
     public TableTranslator() { }
+
+    private final boolean containsDigit(String s) {
+        boolean containsDigit = false;
+        if (s != null && !s.isEmpty()) {
+            for (char c : s.toCharArray()) {
+                if (containsDigit = Character.isDigit(c)) {
+                    break;
+                }
+            }
+        }
+        return containsDigit;
+    }
 
     /**
      * A translator that uses a translation table.
@@ -26,6 +40,7 @@ public class TableTranslator implements TranslatorInterface {
      */
     public TableTranslator(String programDirectory, String targetLanguage) {
         String ttable;
+        this.targetLanguage = targetLanguage;
         switch (targetLanguage) {
             case "FARSI":
 //            ttable = "translation_tables/en-fa-3-col-ttable-no-normal.txt"; // FARSI
@@ -39,7 +54,12 @@ public class TableTranslator implements TranslatorInterface {
                 break;
             case "RUSSIAN":
                 this.lowercaseNeeded = true;
-                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt"; // RUSSIAN
+                this.numberFilteringNeeded = true;
+                ttable = "translation_tables/berk-v0.2-ttables-en-ru.txt"; // RUSSIAN
+                break;
+            case "CHINESE":
+                this.lowercaseNeeded = true;
+                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt"; // CHINESE
                 break;
             default:
                 throw new BetterQueryBuilderException("Unsupported language: " + targetLanguage);
@@ -71,6 +91,14 @@ public class TableTranslator implements TranslatorInterface {
                 String source = tokens[0];
                 String target = tokens[1];
                 Double prob = Double.valueOf(tokens[2]);
+                /* The Russian translation table has lots of top translations that end in a number and are
+                   not good translations. Any translation that has a number in it anywhere can be discarded.
+                 */
+                if (numberFilteringNeeded) {
+                    if (containsDigit(target)) {
+                        continue;
+                    }
+                }
                 if (!translationTable.containsKey(source)) {
                     List<TranslatedTerm> lst = new ArrayList<>();
                     lst.add(new TranslatedTerm(target,prob));
@@ -195,6 +223,32 @@ public class TableTranslator implements TranslatorInterface {
                     newText = newText.trim();
                 }
             }
+        }
+        if (this.targetLanguage.equals("CHINESE")) {
+            newText = bigramIt(newText);
+        }
+        return newText;
+    }
+
+    private String bigramIt(String rawtext) {
+        String[] sentences = rawtext.split("。");
+        String newText = "";
+        for (String sentence : sentences) {
+            // Remove any whitespace and punctuation
+            String text = sentence.replaceAll("\\p{Punct}", "");
+            text = text.replaceAll("\\s+", "");
+
+            if (text.length() == 1) {
+                newText += text.charAt(0);
+            } else if (text.length() == 2) {
+                newText += text.substring(0, 2);
+            } else {
+                for (int i = 1; i < text.length(); ++i) {
+                    newText += text.substring(i - 1, i + 1);
+                    newText += " ";
+                }
+            }
+            newText += " ";
         }
         return newText;
     }

@@ -73,10 +73,13 @@ RUN LC_ALL=C.UTF-8 LANG=C.UTF-8 python3 -m spacy download en_core_web_sm
 WORKDIR /home/taskquerybuilder
 COPY --chown=taskquerybuilder programfiles/translation_tables/CCAligned.en-fa.fw.actual.ti.final /home/taskquerybuilder/programfiles/translation_tables/CCAligned.en-fa.fw.actual.ti.final
 COPY --chown=taskquerybuilder programfiles/translation_tables/unidirectional-with-null-en-ar.simple-tok.txt /home/taskquerybuilder/programfiles/translation_tables/unidirectional-with-null-en-ar.simple-tok.txt
+COPY --chown=taskquerybuilder programfiles/translation_tables/berk-v0.2-ttables-en-zh.txt /home/taskquerybuilder/programfiles/translation_tables/berk-v0.2-ttables-en-zh.txt
+COPY --chown=taskquerybuilder programfiles/translation_tables/berk-v0.2-ttables-en-ru.txt /home/taskquerybuilder/programfiles/translation_tables/berk-v0.2-ttables-en-ru.txt
 COPY --chown=taskquerybuilder programfiles/get_noun_phrases_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder programfiles/get_sentences_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder runit.sh /home/taskquerybuilder
 COPY --chown=taskquerybuilder stop_phrases.txt /home/taskquerybuilder
 COPY --chown=taskquerybuilder target /home/taskquerybuilder/target
 COPY --chown=taskquerybuilder *annotated_task_level_noun_phrases.xlsx /home/taskquerybuilder/
+COPY --chown=taskquerybuilder programfiles/machine-translation-service /home/taskquerybuilder/programfiles/machine-translation-service
 

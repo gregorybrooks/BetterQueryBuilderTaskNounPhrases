@@ -39,6 +39,8 @@ public class MarianTranslator implements TranslatorInterface {
             this.program = "machine-translation-service/batch_translate.py";
         } else if (language.equals("FARSI")) {
             this.program = "persiannlp/batch_translate.py";
+        } else if (language.equals("RUSSIAN")) {
+            this.program = "machine-translation-service/batch_translate_russian.py";
         }
         startDaemon();
     }
