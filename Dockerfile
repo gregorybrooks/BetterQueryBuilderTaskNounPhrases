@@ -75,6 +75,7 @@ COPY --chown=taskquerybuilder programfiles/translation_tables/CCAligned.en-fa.fw
 COPY --chown=taskquerybuilder programfiles/translation_tables/unidirectional-with-null-en-ar.simple-tok.txt /home/taskquerybuilder/programfiles/translation_tables/unidirectional-with-null-en-ar.simple-tok.txt
 COPY --chown=taskquerybuilder programfiles/translation_tables/berk-v0.2-ttables-en-zh.txt /home/taskquerybuilder/programfiles/translation_tables/berk-v0.2-ttables-en-zh.txt
 COPY --chown=taskquerybuilder programfiles/translation_tables/berk-v0.2-ttables-en-ru.txt /home/taskquerybuilder/programfiles/translation_tables/berk-v0.2-ttables-en-ru.txt
+COPY --chown=taskquerybuilder programfiles/translation_tables/combined-en-ru.txt /home/taskquerybuilder/programfiles/translation_tables/combined-en-ru.txt
 COPY --chown=taskquerybuilder programfiles/get_noun_phrases_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder programfiles/get_sentences_from_spacy_daemon.py /home/taskquerybuilder/programfiles
 COPY --chown=taskquerybuilder runit.sh /home/taskquerybuilder

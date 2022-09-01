@@ -55,7 +55,8 @@ public class TableTranslator implements TranslatorInterface {
             case "RUSSIAN":
                 this.lowercaseNeeded = true;
                 this.numberFilteringNeeded = true;
-                ttable = "translation_tables/berk-v0.2-ttables-en-ru.txt"; // RUSSIAN
+//                ttable = "translation_tables/berk-v0.2-ttables-en-ru.txt"; // RUSSIAN
+                ttable = "translation_tables/combined-en-ru.txt"; // RUSSIAN
                 break;
             case "CHINESE":
                 this.lowercaseNeeded = true;

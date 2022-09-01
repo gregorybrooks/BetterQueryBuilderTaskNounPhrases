@@ -996,7 +996,8 @@ public class BetterQueryBuilderTaskNounPhrases {
         betterIR.setupLogging(logFileLocation);
 
         if (targetLanguage.equals("RUSSIAN")) {
-            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+//            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+            betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
         }
         else if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("CHINESE")) {
             betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
