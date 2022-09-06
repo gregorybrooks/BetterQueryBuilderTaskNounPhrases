@@ -43,24 +43,28 @@ public class TableTranslator implements TranslatorInterface {
         this.targetLanguage = targetLanguage;
         switch (targetLanguage) {
             case "FARSI":
-//            ttable = "translation_tables/en-fa-3-col-ttable-no-normal.txt"; // FARSI
+//            ttable = "translation_tables/en-fa-3-col-ttable-no-normal.txt";
 //            this.lowercaseNeeded = true;
-                ttable = "translation_tables/CCAligned.en-fa.fw.actual.ti.final"; // FARSI
+                ttable = "translation_tables/CCAligned.en-fa.fw.actual.ti.final";
                 this.lowercaseNeeded = false;
                 break;
             case "ARABIC":
                 this.lowercaseNeeded = true;
-                ttable = "translation_tables/unidirectional-with-null-en-ar.simple-tok.txt";  // ARABIC
+                ttable = "translation_tables/unidirectional-with-null-en-ar.simple-tok.txt";
                 break;
             case "RUSSIAN":
                 this.lowercaseNeeded = true;
                 this.numberFilteringNeeded = true;
-//                ttable = "translation_tables/berk-v0.2-ttables-en-ru.txt"; // RUSSIAN
-                ttable = "translation_tables/combined-en-ru.txt"; // RUSSIAN
+//                ttable = "translation_tables/berk-v0.2-ttables-en-ru.txt";
+                ttable = "translation_tables/combined-en-ru.txt";
                 break;
             case "CHINESE":
                 this.lowercaseNeeded = true;
-                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt"; // CHINESE
+                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt";
+                break;
+            case "KOREAN":
+                this.lowercaseNeeded = true;
+                ttable = "translation_tables/combined-en-ko.txt";
                 break;
             default:
                 throw new BetterQueryBuilderException("Unsupported language: " + targetLanguage);

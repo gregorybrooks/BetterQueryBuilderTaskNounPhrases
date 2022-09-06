@@ -487,7 +487,13 @@ public class BetterQueryBuilderTaskNounPhrases {
         if (!targetLanguageIsEnglish) {
             StringBuilder nounPhrasesStringBuilder = new StringBuilder();
             for (String phrase : translatedFinalList) {
-                nounPhrasesStringBuilder.append(filterCertainCharactersPostTranslation(phrase)).append(" ");
+                phrase = filterCertainCharactersPostTranslation(phrase);
+                if (phrase.contains(" ")) {
+                    /* For multi-word phrases, we wrap the phrase in a sequential dependence operator */
+                    phrase = "#sdm(" + phrase + ")";
+                }
+
+                nounPhrasesStringBuilder.append(phrase).append(" ");
             }
             nounPhrasesString = nounPhrasesStringBuilder.toString();
             if (searchEngine.equals("galago")) {
@@ -996,10 +1002,11 @@ public class BetterQueryBuilderTaskNounPhrases {
         betterIR.setupLogging(logFileLocation);
 
         if (targetLanguage.equals("RUSSIAN")) {
-//            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
-            betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
+            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+//            betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
         }
-        else if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("CHINESE")) {
+        else if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("CHINESE")
+                || targetLanguage.equals("KOREAN")) {
             betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
         } else if (targetLanguage.equals("ENGLISH") || targetLanguage.equals("EN")) {
             System.out.println("TARGET LANGUAGE IS ENGLISH");
