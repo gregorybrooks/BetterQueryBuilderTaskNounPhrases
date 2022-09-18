@@ -489,7 +489,7 @@ public class BetterQueryBuilderTaskNounPhrases {
             for (String phrase : translatedFinalList) {
                 phrase = filterCertainCharactersPostTranslation(phrase);
                 if (phrase.contains(" ")) {
-                    /* For multi-word phrases, we wrap the phrase in a sequential dependence operator */
+                    /*For multi-word phrases, we wrap the phrase in a sequential dependence operator */
                     phrase = "#sdm(" + phrase + ")";
                 }
 
@@ -1002,8 +1002,8 @@ public class BetterQueryBuilderTaskNounPhrases {
         betterIR.setupLogging(logFileLocation);
 
         if (targetLanguage.equals("RUSSIAN")) {
-            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
-//            betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
+//            betterIR.setTranslator(new MarianTranslator(programDirectory, targetLanguage));
+            betterIR.setTranslator(new TableTranslator(programDirectory, targetLanguage));
         }
         else if (targetLanguage.equals("ARABIC") || targetLanguage.equals("FARSI") || targetLanguage.equals("CHINESE")
                 || targetLanguage.equals("KOREAN")) {

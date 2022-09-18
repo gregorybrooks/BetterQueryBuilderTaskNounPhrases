@@ -60,7 +60,7 @@ public class TableTranslator implements TranslatorInterface {
                 break;
             case "CHINESE":
                 this.lowercaseNeeded = true;
-                ttable = "translation_tables/berk-v0.2-ttables-en-zh.txt";
+                ttable = "translation_tables/combined-en-zh.txt";
                 break;
             case "KOREAN":
                 this.lowercaseNeeded = true;
@@ -103,7 +103,14 @@ public class TableTranslator implements TranslatorInterface {
                     if (containsDigit(target)) {
                         continue;
                     }
+                    if (target.contains("#")) {
+                        continue;
+                    }
+                    if (target.contains("&")) {
+                        continue;
+                    }
                 }
+
                 if (!translationTable.containsKey(source)) {
                     List<TranslatedTerm> lst = new ArrayList<>();
                     lst.add(new TranslatedTerm(target,prob));
@@ -255,7 +262,7 @@ public class TableTranslator implements TranslatorInterface {
             }
             newText += " ";
         }
-        return newText;
+        return newText.trim();
     }
 
     @Override
