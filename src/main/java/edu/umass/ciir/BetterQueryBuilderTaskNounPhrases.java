@@ -990,13 +990,12 @@ public class BetterQueryBuilderTaskNounPhrases {
         programDirectory = ensureTrailingSlash(programDirectory);
         String phase = args[5];
         String targetLanguage = args[3].toUpperCase(Locale.ROOT);
-        String englishIndexLocation = args[6];
-        String logFileLocation = args[7];
+        String logFileLocation = args[6];
         logFileLocation = ensureTrailingSlash(logFileLocation);
-        String galagoLocation = args[8];
-        String qrelFile = args[9];
-        String targetIndexLocation = args[10];
-        String searchEngine = args[11];
+        String galagoLocation = args[7];
+        String qrelFile = args[8];
+        String targetIndexLocation = args[9];
+        String searchEngine = args[10];
 
         BetterQueryBuilderTaskNounPhrases betterIR = new BetterQueryBuilderTaskNounPhrases();
         betterIR.setupLogging(logFileLocation);
