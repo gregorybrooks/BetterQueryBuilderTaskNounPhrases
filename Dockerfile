@@ -81,6 +81,6 @@ COPY --chown=taskquerybuilder programfiles/get_sentences_from_spacy_daemon.py /h
 COPY --chown=taskquerybuilder runit.sh /home/taskquerybuilder
 COPY --chown=taskquerybuilder stop_phrases.txt /home/taskquerybuilder
 COPY --chown=taskquerybuilder target /home/taskquerybuilder/target
-COPY --chown=taskquerybuilder *annotated_task_level_noun_phrases.xlsx /home/taskquerybuilder/
+COPY --chown=taskquerybuilder *.json /home/taskquerybuilder/
 COPY --chown=taskquerybuilder programfiles/machine-translation-service /home/taskquerybuilder/programfiles/machine-translation-service
 

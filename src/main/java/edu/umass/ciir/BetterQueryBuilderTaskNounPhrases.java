@@ -310,7 +310,7 @@ public class BetterQueryBuilderTaskNounPhrases {
             // Open the phrase annotation file if there is one for this task
             try {
                 logger.info("Opening the annotated_task_level_noun_phrases file for this task");
-                np.openNounPhrasesJSONFile(queryFileDirectory
+                np.openNounPhrasesJSONFile("/home/taskquerybuilder/"
                         + t.taskNum + ".annotated_task_level_noun_phrases.json", t);
             } catch (Exception e) {
                 throw new BetterQueryBuilderException(e);
@@ -350,7 +350,7 @@ public class BetterQueryBuilderTaskNounPhrases {
             }
             if (mode.equals("HITL")) {
                 /* add noun phrases in sentences judged to be relevant to the query */
-                String annotatedSentencesFilePath = queryFileDirectory
+                String annotatedSentencesFilePath = "/home/taskquerybuilder/"
                         + t.taskNum + "." + r.reqNum + ".annotated_sentences.json";
                 for (AnnotatedSentence annotatedSentence : annotatedSentences.fetchSentences(annotatedSentencesFilePath)) {
                     if (isRelevant(annotatedSentence.getJudgment())) {
