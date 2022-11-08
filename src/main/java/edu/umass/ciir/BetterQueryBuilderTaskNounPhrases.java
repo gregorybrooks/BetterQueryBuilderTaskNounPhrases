@@ -380,28 +380,28 @@ public class BetterQueryBuilderTaskNounPhrases {
         for (Map.Entry<String, Integer> entry : reverseSortedMap.entrySet()) {
                 if (mode.equals("HITL")) {
                     if (np.hasAnnotations()) {   // if there is an annotated noun phrases file
-                        //logger.info("Looking for phrase in annotations: " + entry.getKey());
+                        logger.info("Looking for phrase in annotations: " + entry.getKey());
                         if (np.containsPhrase(entry.getKey())) {
-                            //logger.info("Phrase found in annotations");
+                            logger.info("Phrase found in annotations");
                             if (isRelevant(np.getPhraseAnnotation(entry.getKey()))) {
-                                //logger.info("Phrase is relevant, using it");
+                                logger.info("Phrase is relevant, using it");
                                 finalList.add(filterCertainCharacters(entry.getKey()));
                             } else {
-                                //logger.info("Phrase is not relevant, skipping it");
+                                logger.info("Phrase is not relevant, skipping it");
                                 ;  // annotator said it was not relevant, don't add it to finalList
                             }
                         } else { // annotation file has nothing to say about this phrase, so use normal selection criteria
-                            //logger.info("Phrase not found in annotations, using normal selection criteria for it");
+                            logger.info("Phrase not found in annotations, using normal selection criteria for it");
                             if (includeAllPhrases || (uniqueDocIds.size() == 1) || (entry.getValue() > 1)) {
-                                //logger.info("Using the phrase");
+                                logger.info("Using the phrase");
                                 finalList.add(filterCertainCharacters(entry.getKey()));
                             } else {
-                                //logger.info("Not using the phrase");
+                                logger.info("Not using the phrase");
                             }
                         }
                     }
                 } else {   // not HITL mode or no annotation file--use the normal selection criteria for every phrase
-                    //logger.info("Using normal selection criteria");
+                    logger.info("Using normal selection criteria");
                     if (includeAllPhrases || (uniqueDocIds.size() == 1) || (entry.getValue() > 1)) {
                         //logger.info("Using the phrase");
                         finalList.add(filterCertainCharacters(entry.getKey()));
@@ -710,8 +710,8 @@ public class BetterQueryBuilderTaskNounPhrases {
         if (mode.equals("HITL")) {
             logger.info("Building stop phrase list");
             for (Task t : tasks) {
-                // use the annotated noun phrase file that has been put into the queryFiles directory
-                String annotatedNounPhraseFileName = queryFileDirectory + t.taskNum + ".annotated_task_level_noun_phrases.json";
+                // use the annotated noun phrase file that has been put into the Docker home directory
+                String annotatedNounPhraseFileName = "/home/taskquerybuilder/" + t.taskNum + ".annotated_task_level_noun_phrases.json";
                 try {
                     stopPhrases.addAll(np.getStopPhrases(annotatedNounPhraseFileName, t));
                 } catch (Exception e) {
