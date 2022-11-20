@@ -480,7 +480,7 @@ public class BetterQueryBuilderTaskNounPhrases {
         if (searchEngine.equals("anserini")) {
             nonTranslatedNounPhrasesString = nonTranslatedNounPhrasesStringBuilder.toString();
         } else if (searchEngine.equals("galago")) {
-            nonTranslatedNounPhrasesString = "#combine(" + nonTranslatedNounPhrasesString + ") ";
+            nonTranslatedNounPhrasesString = "#combine(" + nonTranslatedNounPhrasesStringBuilder.toString() + ") ";
         }
 
         String nounPhrasesString;
