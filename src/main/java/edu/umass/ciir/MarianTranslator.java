@@ -45,6 +45,10 @@ public class MarianTranslator implements TranslatorInterface {
         startDaemon();
     }
 
+    public String getTargetLanguage() {
+        return language;
+    }
+
     // need to do this but only on the translated words, not on the Galago structured query
     // operators and their parameters
     // For now, omitting this filtering

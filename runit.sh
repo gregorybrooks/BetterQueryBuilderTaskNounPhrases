@@ -1,5 +1,5 @@
 set -v
-java -jar target/BetterQueryBuilderTaskNounPhrases-3.0.0.jar $eventExtractorFileLocation/$INPUTFILE $MODE $queryFileLocation/$QUERYFILE $OUT_LANG $HOME/programfiles $PHASE $englishIndexLocation $logFileLocation $galagoLocation $qrelFile $targetIndexLocation $SEARCH_ENGINE
+java -jar target/BetterQueryBuilderTaskNounPhrases-3.1.0.jar $eventExtractorFileLocation/$INPUTFILE $MODE $queryFileLocation/$QUERYFILE $OUT_LANG $HOME/programfiles $PHASE $englishIndexLocation $logFileLocation $galagoLocation $qrelFile $targetIndexLocation $SEARCH_ENGINE
 if [ $? -eq 0 ]
 then
   set +e

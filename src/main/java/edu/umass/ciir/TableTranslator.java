@@ -127,6 +127,10 @@ public class TableTranslator implements TranslatorInterface {
         loadStopWords();
     }
 
+    public String getTargetLanguage() {
+        return targetLanguage;
+    }
+
     private void loadStopWords () {
         stopWords.add("the");
         stopWords.add("The");
@@ -204,6 +208,31 @@ public class TableTranslator implements TranslatorInterface {
         return true;
     }
 
+    private boolean isAllKorean(String s) {
+        for (int i = 0; i < s.length(); ) {
+            int codepoint = s.codePointAt(i);
+            i += Character.charCount(codepoint);
+            if (Character.UnicodeScript.of(codepoint) != Character.UnicodeScript.HANGUL) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isAllChinese(String s) {
+        for (int i = 0; i < s.length(); ) {
+            int codepoint = s.codePointAt(i);
+            i += Character.charCount(codepoint);
+            if (Character.UnicodeScript.of(codepoint) != Character.UnicodeScript.HAN) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isKoreanHangul(int codepoint) {
+        return (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HANGUL);
+    }
     /**
      * Translate a string consisting of space-delimited words.
      * @param text the text to be translated
@@ -213,7 +242,7 @@ public class TableTranslator implements TranslatorInterface {
     public String getTranslation(String text) {
         String newText = "";
         for (String originalTerm : text.split("[‘'’´!”“\"\\[\\]@ — .();?{}:,/\n\t-]")) {
-            if (originalTerm.length() > 2 && !stopWords.contains(originalTerm) && !isAllNumeric(originalTerm)) {
+            if (originalTerm.length() > 2 && !stopWords.contains(originalTerm) && !(isAllNumeric(originalTerm))) {
                 String decodedTerm;
                 if (lowercaseNeeded) {
                     decodedTerm = unidecode.decode(originalTerm).toLowerCase();
@@ -225,18 +254,31 @@ public class TableTranslator implements TranslatorInterface {
                     List<TranslatedTerm> sortedList = translationTable.get(decodedTerm).stream()
                             .filter(Predicate.isEqual("'").or(Predicate.isEqual("\"")).negate())  // ttable has ' as Arabic sometimes!
                             .sorted(new TranslatedTerm.SortByProbDesc())
-                            .limit(1).collect(Collectors.toList());
+                            .limit(5).collect(Collectors.toList());
                     for (TranslatedTerm t : sortedList) {
 //                        System.out.println("Translated term: " + t.term);
                         String candidate = filterCertainCharactersPostTranslation(t.term);
 //                        System.out.println("Translated term after filtering: " + candidate);
+                        if (this.targetLanguage.equals("KOREAN")) {
+                            if (!isAllKorean(candidate)) {
+                                continue;   // skip non-Korean translations
+                            }
+                        }
                         newText += (" " + candidate);
+                        break;  // take the top 1 candidate only
                     }
                     newText = newText.trim();
                 }
             }
         }
         if (this.targetLanguage.equals("CHINESE")) {
+            /*
+            if (isAllChinese(newText)) {
+                newText = bigramIt(newText);
+            } else {
+                newText = "";
+            }
+             */
             newText = bigramIt(newText);
         }
         return newText;

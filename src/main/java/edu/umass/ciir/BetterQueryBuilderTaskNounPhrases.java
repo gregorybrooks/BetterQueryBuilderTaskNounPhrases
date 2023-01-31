@@ -302,6 +302,18 @@ public class BetterQueryBuilderTaskNounPhrases {
         return (judgment.equals("P") || judgment.equals("E") || judgment.equals("G"));
     }
 
+    private boolean isAllChinese(String s) {
+        for (int i = 0; i < s.length(); ) {
+            boolean isSpace = (s.charAt(i) == ' ');
+            int codepoint = s.codePointAt(i);
+            i += Character.charCount(codepoint);
+            if (!isSpace && Character.UnicodeScript.of(codepoint) != Character.UnicodeScript.HAN) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected void buildDocsString(Task t, Request request) {
         logger.info("Building query for task " + t.taskNum + ", Request " + (request == null ? "NULL" : request.reqNum));
 
@@ -489,8 +501,12 @@ public class BetterQueryBuilderTaskNounPhrases {
             for (String phrase : translatedFinalList) {
                 phrase = filterCertainCharactersPostTranslation(phrase);
                 if (phrase.contains(" ")) {
+                    String operator = "#sdm";
+                    if (translator.getTargetLanguage().equals("CHINESE") && !isAllChinese(phrase)) {
+                        operator = "#od:1";
+                    }
                     /*For multi-word phrases, we wrap the phrase in a sequential dependence operator */
-                    phrase = "#sdm(" + phrase + ")";
+                    phrase = operator + "(" + phrase + ")";
                 }
 
                 nounPhrasesStringBuilder.append(phrase).append(" ");
